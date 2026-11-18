@@ -9,4 +9,6 @@
     <string name="sml">Small</string>
     <string name="med">Medium</string>
     <string name="lrg">Large</string>
+    <string name="save_success">Drawing saved to Gallery</string>
+    <string name="save_failed">The drawing could not be saved</string>
 </resources>

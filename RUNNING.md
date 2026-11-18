@@ -1,28 +1,48 @@
+# Compilar y ejecutar AndroidPaint
 
+## Requisitos
 
-<!-- local-development:start -->
-# Desarrollo local
+- Android Studio actual, con Gradle JDK 17 (JDK 21 también es válido para el wrapper).
+- Android SDK 36 y sus herramientas. Usa los wrappers de cada carpeta.
+- Dispositivo o emulador Android 6 o posterior, API 23 como mínimo. El destino es Android 16, API 36.
 
-Puedes abrir este repositorio en VS Code, Antigravity o Sublime Text. El compilador y los servicios necesarios dependen del componente indicado abajo.
+El mínimo pasa de API 19 a API 23 para usar el entorno AndroidX actual. Los originales se conservan en el historial para revisar el soporte antiguo. No se cambiaron los identificadores de las aplicaciones.
 
-## Android / Gradle
+## Un comando desde esta carpeta
 
-Importa en Android Studio la carpeta que contiene `settings.gradle`. Hay que revisar juntos el wrapper, Android Gradle Plugin, JDK y SDK antes de sincronizar. Guarda la ruta del SDK en `local.properties`, ignorado por Git, y configura localmente las claves Maps/Firebase. Esta revisión no acredita todavía un APK válido.
+```powershell
+.uild-local.ps1 -Action Check
+.uild-local.ps1 -Project PINTA2 -Action Build
+.uild-local.ps1 -Project paintSO2 -Action Test
+```
 
-## Componentes y validación
+El script busca un JDK 17/21 instalado, permite `-JavaHome` y `-AndroidSdk`, configura las variables solo durante su ejecución y las restaura al terminar. Necesita acceso a Internet la primera vez para resolver las dependencias. No modifica las variables globales de Windows.
 
-Inventario y compilaciones locales del 2026-11-15. Una compilación correcta no acredita todavía interacción, compatibilidad de base de datos, instalador ni despliegue.
+## Android Studio
 
-| Componente | Tipo / destino | Validación |
-| --- | --- | --- |
-| [PINTA2-master/PINTA2-master/app/build.gradle](<PINTA2-master/PINTA2-master/app/build.gradle>) | gradle | Sin ejecutar |
-| [PINTA2-master/PINTA2-master/build.gradle](<PINTA2-master/PINTA2-master/build.gradle>) | gradle | Sin ejecutar |
-| [PINTA2-master/PINTA2-master/settings.gradle](<PINTA2-master/PINTA2-master/settings.gradle>) | gradle | Sin ejecutar |
-| [paintSO2-master/paintSO2-master/app/build.gradle](<paintSO2-master/paintSO2-master/app/build.gradle>) | gradle | Sin ejecutar |
-| [paintSO2-master/paintSO2-master/build.gradle](<paintSO2-master/paintSO2-master/build.gradle>) | gradle | Sin ejecutar |
-| [paintSO2-master/paintSO2-master/settings.gradle](<paintSO2-master/paintSO2-master/settings.gradle>) | gradle | Sin ejecutar |
+Abre una de estas carpetas como proyecto Gradle:
 
-## Archivos ignorados
+- `PINTA2-master/PINTA2-master`
+- `paintSO2-master/paintSO2-master`
 
-`.gitignore` excluye credenciales locales, estado del editor y salidas de las herramientas detectadas. No deja de versionar archivos que ya estaban en Git. Los manifiestos, archivos de bloqueo, recursos fuente y scripts de esquema forman parte del código.
-<!-- local-development:end -->
+Selecciona JDK 17 para Gradle y tu SDK Android en las preferencias del IDE. El archivo `local.properties` es local y está ignorado. También puedes ejecutar en cualquiera de esas raíces:
+
+```powershell
+.\gradlew.bat assembleDebug testDebugUnitTest lintDebug
+```
+
+La APK de cada aplicación se genera en `app/build/outputs/apk/debug/app-debug.apk`. Desde Android Studio usa Run, o instala en un emulador de prueba con `adb -s <serial> install -r app/build/outputs/apk/debug/app-debug.apk`.
+
+## Uso y almacenamiento
+
+Dibuja sobre el lienzo, elige colores y tamaños, usa el borrador o crea un dibujo nuevo mediante su confirmación. Guardar muestra una confirmación; cancelar no escribe una imagen. El PNG se guarda en `Pictures/PINTA2` o `Pictures/paintSO2` y aparece en la galería.
+
+En Android 10 y posteriores, guardar imágenes propias usa MediaStore sin pedir acceso general a fotografías. En Android 6 a 9 se solicita el permiso de escritura cuando se confirma guardar. El lienzo conserva sus trazos al cambiar de tamaño o girar la actividad. No hay un sistema de proyectos persistentes, autoguardado después de cerrar el proceso ni funciones de edición avanzadas.
+
+## Comprobaciones
+
+Cada aplicación contiene pruebas gráficas para color, borrado y reanudación, limpieza, redimensionado, pulsaciones y selección de color después del borrador. Se compilan las APK y se ejecuta lint sin desactivar sus errores. La revisión también comprueba arranque, interacción y PNG en un emulador Android 16; los resultados detallados se entregan en el informe de la revisión.
+
+Los directorios build, cachés, configuraciones locales y estado de los editores se excluyen de Git. Los archivos generados incluidos en las importaciones antiguas permanecen accesibles en el historial, pero no forman parte del código mantenido.
+
+Referencias de Android: [almacenamiento de imágenes con MediaStore](https://developer.android.com/training/data-storage/shared/media) y [áreas seguras para interfaces de borde a borde](https://developer.android.com/develop/ui/views/layout/edge-to-edge).

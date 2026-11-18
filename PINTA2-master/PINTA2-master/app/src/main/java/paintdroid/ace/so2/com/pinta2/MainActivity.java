@@ -3,15 +3,15 @@ package paintdroid.ace.so2.com.pinta2;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.provider.MediaStore;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import java.util.UUID;
+
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private DrawingView drawView;
@@ -22,6 +22,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        View root = findViewById(android.R.id.content);
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(root, (content, insets) -> {
+            androidx.core.graphics.Insets bars = insets.getInsets(
+                    androidx.core.view.WindowInsetsCompat.Type.systemBars() |
+                    androidx.core.view.WindowInsetsCompat.Type.displayCutout());
+            content.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+            return androidx.core.view.WindowInsetsCompat.CONSUMED;
+        });
 
         drawView = (DrawingView) findViewById(R.id.drawing);
         /*retrieve the first paint color button in the palette area, which is initially going to be
@@ -89,7 +97,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      */
     @Override
     public void onClick(View v) {
-        drawView.setDrawingCacheEnabled(true);
+
         //respond to clicks
         if(v.getId()==R.id.draw_btn){
             //draw button clicked
@@ -141,7 +149,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 public void onClick(View v) {
                     drawView.setErase(true);
                     drawView.setBrushSize(smallBrush);
-                    drawView.setErase(false);
                     brushDialog.dismiss();
                 }
             });
@@ -151,7 +158,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 public void onClick(View v) {
                     drawView.setErase(true);
                     drawView.setBrushSize(mediumBrush);
-                    drawView.setErase(false);
                     brushDialog.dismiss();
                 }
             });
@@ -161,7 +167,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 public void onClick(View v) {
                     drawView.setErase(true);
                     drawView.setBrushSize(largeBrush);
-                    drawView.setErase(false);
                     brushDialog.dismiss();
                 }
             });
@@ -192,7 +197,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             saveDialog.setMessage("Save drawing to device Gallery?");
             saveDialog.setPositiveButton("Yes", new DialogInterface.OnClickListener(){
                 public void onClick(DialogInterface dialog, int which){
-                    //save drawing
+                    saveDrawing();
                 }
             });
             saveDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener(){
@@ -202,25 +207,40 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             });
             saveDialog.show();
 
-            String imgSaved = MediaStore.Images.Media.insertImage(
-                    getContentResolver(), drawView.getDrawingCache(),
-                    UUID.randomUUID().toString()+".png", "drawing");
-            if(imgSaved!=null){
-                Toast savedToast = Toast.makeText(getApplicationContext(),
-                        "Drawing saved to Gallery!", Toast.LENGTH_SHORT);
-                savedToast.show();
-            }
-            else{
-                Toast unsavedToast = Toast.makeText(getApplicationContext(),
-                        "Oops! Image could not be saved.", Toast.LENGTH_SHORT);
-                unsavedToast.show();
-            }
-            drawView.destroyDrawingCache();
+
         }
 
 
 
 
 
+    }
+
+    private void saveDrawing() {
+        if (android.os.Build.VERSION.SDK_INT < 29 &&
+                androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            androidx.core.app.ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, 41);
+            return;
+        }
+        android.graphics.Bitmap bitmap = drawView.exportBitmap();
+        try {
+            DrawingStorage.save(this, bitmap);
+            Toast.makeText(this, R.string.save_success, Toast.LENGTH_SHORT).show();
+        } catch (java.io.IOException | RuntimeException error) {
+            Toast.makeText(this, R.string.save_failed, Toast.LENGTH_LONG).show();
+        } finally {
+            bitmap.recycle();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 41 && grantResults.length > 0 &&
+                grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            saveDrawing();
+        }
     }
 }

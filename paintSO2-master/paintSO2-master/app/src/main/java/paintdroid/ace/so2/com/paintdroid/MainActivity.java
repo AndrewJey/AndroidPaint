@@ -3,12 +3,12 @@ package paintdroid.ace.so2.com.paintdroid;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.provider.MediaStore;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+
+
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -17,7 +17,7 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.UUID;
+
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener{
     ImageButton negro;
@@ -25,7 +25,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     ImageButton rojo;
     ImageButton verde;
     ImageButton azul;
-    private static lienzo lienzo;
+    private lienzo lienzo;
     float ppequeno;
     float pmediano;
     float pgrande;
@@ -38,6 +38,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        View root = findViewById(android.R.id.content);
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(root, (content, insets) -> {
+            androidx.core.graphics.Insets bars = insets.getInsets(
+                    androidx.core.view.WindowInsetsCompat.Type.systemBars() |
+                    androidx.core.view.WindowInsetsCompat.Type.displayCutout());
+            content.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+            return androidx.core.view.WindowInsetsCompat.CONSUMED;
+        });
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         negro = (ImageButton)findViewById(R.id.colornegro);
@@ -102,28 +110,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         String color = null;
 
 
-        switch (v.getId()){
-            case R.id.colornegro:
+        
+            if (v.getId() == R.id.colornegro) {
                 color = v.getTag().toString();
                 lienzo.setColor(color);
-                break;
-            case R.id.colorblanco:
+
+            } else if (v.getId() == R.id.colorblanco) {
                 color = v.getTag().toString();
                 lienzo.setColor(color);
-                break;
-            case R.id.colorazul:
+
+            } else if (v.getId() == R.id.colorazul) {
                 color = v.getTag().toString();
                 lienzo.setColor(color);
-                break;
-            case R.id.colorverde:
+
+            } else if (v.getId() == R.id.colorverde) {
                 color = v.getTag().toString();
                 lienzo.setColor(color);
-                break;
-            case R.id.colorrojo:
+
+            } else if (v.getId() == R.id.colorrojo) {
                 color = v.getTag().toString();
                 lienzo.setColor(color);
-                break;
-            case R.id.trazo:
+
+            } else if (v.getId() == R.id.trazo) {
                 final Dialog tamanopunto = new Dialog(this);
                 tamanopunto.setTitle("Tamaño del punto:");
                 tamanopunto.setContentView(R.layout.tamano_punto);
@@ -161,9 +169,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 //show and wait for user interaction
                 tamanopunto.show();
 
-
-                break;
-            case R.id.anadir:
+            } else if (v.getId() == R.id.anadir) {
 
 
                 AlertDialog.Builder newDialog = new AlertDialog.Builder(this);
@@ -183,9 +189,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 });
                 newDialog.show();
 
-
-                break;
-            case R.id.borrar:
+            } else if (v.getId() == R.id.borrar) {
 
                 final Dialog borrarpunto = new Dialog(this);
                 borrarpunto.setTitle("Tamaño de borrado:");
@@ -224,9 +228,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 //show and wait for user interaction
                 borrarpunto.show();
 
-
-                break;
-            case R.id.guardar:
+            } else if (v.getId() == R.id.guardar) {
 
                 AlertDialog.Builder salvarDibujo = new AlertDialog.Builder(this);
                 salvarDibujo.setTitle("Salvar dibujo");
@@ -234,24 +236,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 salvarDibujo.setPositiveButton("Aceptar", new DialogInterface.OnClickListener(){
                     public void onClick(DialogInterface dialog, int which){
 
-                        //Salvar dibujo
-                        lienzo.setDrawingCacheEnabled(true);
-                        //attempt to save
-                        String imgSaved = MediaStore.Images.Media.insertImage(
-                                getContentResolver(), lienzo.getDrawingCache(),
-                                UUID.randomUUID().toString()+".png", "drawing");
-                        //Mensaje de todo correcto
-                        if(imgSaved!=null){
-                            Toast savedToast = Toast.makeText(getApplicationContext(),
-                                    "¡Dibujo salvado en la galeria!", Toast.LENGTH_SHORT);
-                            savedToast.show();
-                        }
-                        else{
-                            Toast unsavedToast = Toast.makeText(getApplicationContext(),
-                                    "¡Error! La imagen no ha podido ser salvada.", Toast.LENGTH_SHORT);
-                            unsavedToast.show();
-                        }
-                        lienzo.destroyDrawingCache();
+                        saveDrawing();
 
 
                     }
@@ -263,10 +248,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 });
                 salvarDibujo.show();
 
-                break;
-            default:
+        }
+    }
 
-                break;
+    private void saveDrawing() {
+        if (android.os.Build.VERSION.SDK_INT < 29 &&
+                androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            androidx.core.app.ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE}, 41);
+            return;
+        }
+        android.graphics.Bitmap bitmap = lienzo.exportBitmap();
+        try {
+            DrawingStorage.save(this, bitmap);
+            Toast.makeText(this, R.string.save_success, Toast.LENGTH_SHORT).show();
+        } catch (java.io.IOException | RuntimeException error) {
+            Toast.makeText(this, R.string.save_failed, Toast.LENGTH_LONG).show();
+        } finally {
+            bitmap.recycle();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 41 && grantResults.length > 0 &&
+                grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            saveDrawing();
         }
     }
 }

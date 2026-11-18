@@ -19,17 +19,17 @@ public class lienzo extends View {
     //Path que utilizaré para ir pintando las lineas
     private Path drawPath;
     //Paint de dibujar y Paint de Canvas
-    private static Paint drawPaint;
+    private Paint drawPaint;
     private Paint canvasPaint;
     //Color Inicial
-    private static int paintColor = 0xFFFF0000;
+    private int paintColor = 0xFFFF0000;
     //canvas
     private Canvas drawCanvas;
     //canvas para guardar
     private Bitmap canvasBitmap;
 
     static float TamanyoPunto;
-    private static boolean borrado=false;
+    private boolean borrado=false;
 
 
     public lienzo(Context context, AttributeSet attrs) {
@@ -57,8 +57,13 @@ public class lienzo extends View {
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
+        if (w <= 0 || h <= 0) return;
+        Bitmap previous = canvasBitmap;
         canvasBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         drawCanvas = new Canvas(canvasBitmap);
+        if (previous != null) {
+            drawCanvas.drawBitmap(previous, null, new android.graphics.Rect(0, 0, w, h), canvasPaint);
+        }
     }
 
 
@@ -100,35 +105,45 @@ public class lienzo extends View {
     public void setColor(String newColor){
         invalidate();
         paintColor = Color.parseColor(newColor);
+        setBorrado(false);
         drawPaint.setColor(paintColor);
     }
 
     //Poner tamaño del punto
-    public static void setTamanyoPunto(float nuevoTamano){
+    public void setTamanyoPunto(float nuevoTamano){
 
         drawPaint.setStrokeWidth(nuevoTamano);
     }
 
 
     //set borrado true or false
-    public static void setBorrado(boolean estaborrado){
+    public void setBorrado(boolean estaborrado){
         borrado=estaborrado;
         if(borrado) {
 
-            drawPaint.setColor(Color.WHITE);
+            drawPaint.setXfermode(new android.graphics.PorterDuffXfermode(PorterDuff.Mode.CLEAR));
             //drawPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
 
         }
         else {
             drawPaint.setColor(paintColor);
-            //drawPaint.setXfermode(null);
+            drawPaint.setXfermode(null);
         }
     }
 
     public void NuevoDibujo(){
+        drawPath.reset();
         drawCanvas.drawColor(0, PorterDuff.Mode.CLEAR);
         invalidate();
 
     }
 
+
+    public Bitmap exportBitmap() {
+        Bitmap output = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(output);
+        canvas.drawColor(Color.WHITE);
+        draw(canvas);
+        return output;
+    }
 }

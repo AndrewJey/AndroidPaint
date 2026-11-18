@@ -73,8 +73,13 @@ public class DrawingView extends View {
 
         //instantiate the drawing canvas and bitmap using the width and height values
 
+        if (w <= 0 || h <= 0) return;
+        Bitmap previous = canvasBitmap;
         canvasBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         drawCanvas = new Canvas(canvasBitmap);
+        if (previous != null) {
+            drawCanvas.drawBitmap(previous, null, new android.graphics.Rect(0, 0, w, h), canvasPaint);
+        }
     }
 
     //override the onDraw method, so add it to the class now:
@@ -109,6 +114,7 @@ public class DrawingView extends View {
                 drawPath.lineTo(touchX, touchY);
                 break;
             case MotionEvent.ACTION_UP:
+                drawPath.lineTo(touchX, touchY);
                 drawCanvas.drawPath(drawPath, drawPaint);
                 drawPath.reset();
                 break;
@@ -125,6 +131,7 @@ public class DrawingView extends View {
         invalidate();
         //parsing and set the color for drawing
         paintColor = Color.parseColor(newColor);
+        setErase(false);
         drawPaint.setColor(paintColor);
     }
 
@@ -157,8 +164,17 @@ public class DrawingView extends View {
     }
 
     public void startNew(){
+        drawPath.reset();
         drawCanvas.drawColor(0, PorterDuff.Mode.CLEAR);
         invalidate();
     }
 
+
+    public Bitmap exportBitmap() {
+        Bitmap output = Bitmap.createBitmap(getWidth(), getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(output);
+        canvas.drawColor(Color.WHITE);
+        draw(canvas);
+        return output;
+    }
 }
